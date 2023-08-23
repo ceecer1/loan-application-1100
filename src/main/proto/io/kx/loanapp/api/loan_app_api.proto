@@ -26,7 +26,7 @@ message LoanAppState {
 }
 
 message SubmitCommand {
-    string loan_app_id = 1;
+    string loan_app_id = 1 [(kalix.field).entity_key = true];
     string client_id = 2;
     int64 client_monthly_income_cents = 3;
     int64 loan_amount_cents = 4;
@@ -34,15 +34,15 @@ message SubmitCommand {
 }
 
 message GetCommand {
-    string loan_app_id = 1;
+    string loan_app_id = 1 [(kalix.field).entity_key = true];
 }
 
 message ApproveCommand {
-    string loan_app_id = 1;
+    string loan_app_id = 1 [(kalix.field).entity_key = true];
 }
 
 message DeclineCommand {
-    string loan_app_id = 1;
+    string loan_app_id = 1 [(kalix.field).entity_key = true];
     string reason = 2;
 }
 
@@ -62,7 +62,12 @@ service LoanAppService {
         }
     };
 
-    rpc Submit(SubmitCommand) returns (google.protobuf.Empty) {}
+    rpc Submit(SubmitCommand) returns (google.protobuf.Empty) {
+        option (google.api.http) = {
+            post: "/loanapp/create",
+            body: "*"
+        };
+    }
     rpc Get(GetCommand) returns (LoanAppState) {}
     rpc Approve(ApproveCommand) returns (google.protobuf.Empty) {}
     rpc Decline(DeclineCommand) returns (google.protobuf.Empty) {}

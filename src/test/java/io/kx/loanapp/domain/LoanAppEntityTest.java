@@ -10,6 +10,8 @@ import org.junit.Test;
 
 import static org.junit.Assert.*;
 
+import java.util.UUID;
+
 // This class was initially generated based on the .proto definition by Kalix tooling.
 //
 // As long as this file exists it will not be overwritten: you can maintain it yourself,
@@ -36,11 +38,26 @@ public class LoanAppEntityTest {
   }
 
   @Test
-  @Ignore("to be implemented")
   public void submitTest() {
     LoanAppEntityTestKit service = LoanAppEntityTestKit.of(LoanAppEntity::new);
-    // SubmitCommand command = SubmitCommand.newBuilder()...build();
-    // EventSourcedResult<Empty> result = service.submit(command);
+    String loanAppId = UUID.randomUUID().toString();
+    LoanAppApi.SubmitCommand submitCommand = LoanAppApi.SubmitCommand.newBuilder()
+      .setLoanAppId(loanAppId)
+      .setClientId("clientId")
+      .setClientMonthlyIncomeCents(200000)
+      .setLoanAmountCents(5000000)
+      .setLoanDurationMonths(20)
+      .build();
+
+    EventSourcedResult<Empty> result = service.submit(submitCommand);
+    assertTrue(result.didEmitEvents());
+
+    LoanAppApi.GetCommand getCommand = LoanAppApi.GetCommand.newBuilder()
+      .setLoanAppId(loanAppId).build();
+
+    EventSourcedResult<LoanAppApi.LoanAppState> getResult = service.get(getCommand);
+    assertEquals(LoanAppApi.LoanAppStatus.STATUS_IN_REVIEW, getResult.getReply().getStatus());
+
   }
 
 

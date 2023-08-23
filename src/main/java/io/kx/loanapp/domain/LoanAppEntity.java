@@ -1,7 +1,10 @@
 package io.kx.loanapp.domain;
 
 import com.google.protobuf.Empty;
+import com.google.protobuf.util.Timestamps;
+
 import io.kx.loanapp.api.LoanAppApi;
+import io.kx.loanapp.domain.LoanAppDomain.LoanAppDomainStatus;
 import kalix.javasdk.eventsourcedentity.EventSourcedEntity;
 import kalix.javasdk.eventsourcedentity.EventSourcedEntity.Effect;
 import kalix.javasdk.eventsourcedentity.EventSourcedEntityContext;
@@ -23,17 +26,46 @@ public class LoanAppEntity extends AbstractLoanAppEntity {
 
   @Override
   public LoanAppDomain.LoanAppDomainState emptyState() {
-    throw new UnsupportedOperationException("Not implemented yet, replace with your empty entity state");
+    return LoanAppDomain.LoanAppDomainState.getDefaultInstance();
   }
 
   @Override
   public Effect<Empty> submit(LoanAppDomain.LoanAppDomainState currentState, LoanAppApi.SubmitCommand submitCommand) {
-    return effects().error("The command handler for `Submit` is not implemented, yet");
+    if (currentState.equals(LoanAppDomain.LoanAppDomainState.getDefaultInstance())) {
+      // validated
+      LoanAppDomain.Submitted submittedEvent = LoanAppDomain.Submitted.newBuilder()
+        .setClientId(submitCommand.getClientId())
+        .setClientMonthlyIncomeCents(submitCommand.getClientMonthlyIncomeCents())
+        .setLoanAmountCents(submitCommand.getLoanAmountCents())
+        .setLoanDurationMonths(submitCommand.getLoanDurationMonths())
+        .setLoanAppId(submitCommand.getLoanAppId())
+        .setEventTimestamp(Timestamps.fromMillis(System.currentTimeMillis()))
+        .build();
+
+      return effects().emitEvent(submittedEvent).thenReply(any -> Empty.getDefaultInstance()); 
+    } else if (currentState.getStatus() == LoanAppDomain.LoanAppDomainStatus.STATUS_IN_REVIEW) {
+      return effects().reply(Empty.getDefaultInstance());
+    } else {
+      return effects().error("STATUS SEEMS WRONG");
+    }
   }
 
   @Override
   public Effect<LoanAppApi.LoanAppState> get(LoanAppDomain.LoanAppDomainState currentState, LoanAppApi.GetCommand getCommand) {
-    return effects().error("The command handler for `Get` is not implemented, yet");
+    if (currentState.equals(LoanAppDomain.LoanAppDomainState.getDefaultInstance())) {
+      return effects().reply(LoanAppApi.LoanAppState.getDefaultInstance());
+    } else {
+      LoanAppApi.LoanAppState apiState = LoanAppApi.LoanAppState.newBuilder()
+      .setClientId(currentState.getClientId())
+      .setLoanAmountCents(currentState.getLoanAmountCents())
+      .setClientMonthlyIncomeCents(currentState.getClientMonthlyIncomeCents())
+      .setLoanDurationMonths(currentState.getLoanDurationMonths())
+      .setStatus(LoanAppApi.LoanAppStatus.forNumber(currentState.getStatus().getNumber()))
+      .build();
+
+      return effects().reply(apiState);
+    }
+
   }
 
   @Override
@@ -48,8 +80,16 @@ public class LoanAppEntity extends AbstractLoanAppEntity {
 
   @Override
   public LoanAppDomain.LoanAppDomainState submitted(LoanAppDomain.LoanAppDomainState currentState, LoanAppDomain.Submitted submitted) {
-    throw new RuntimeException("The event handler for `Submitted` is not implemented, yet");
+    return LoanAppDomain.LoanAppDomainState.newBuilder()
+    .setClientId(submitted.getClientId())
+    .setClientMonthlyIncomeCents(submitted.getClientMonthlyIncomeCents())
+    .setLoanAmountCents(submitted.getLoanAmountCents())
+    .setLoanDurationMonths(submitted.getLoanDurationMonths())
+    .setStatus(LoanAppDomain.LoanAppDomainStatus.STATUS_IN_REVIEW)
+    .setLastUpdateTimestamp(submitted.getEventTimestamp())
+    .build();
   }
+
   @Override
   public LoanAppDomain.LoanAppDomainState approved(LoanAppDomain.LoanAppDomainState currentState, LoanAppDomain.Approved approved) {
     throw new RuntimeException("The event handler for `Approved` is not implemented, yet");
