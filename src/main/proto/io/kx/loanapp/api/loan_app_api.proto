@@ -62,12 +62,7 @@ service LoanAppService {
         }
     };
 
-    rpc Submit(SubmitCommand) returns (google.protobuf.Empty) {
-        option (google.api.http) = {
-            post: "/loanapp/create",
-            body: "*"
-        };
-    }
+    rpc Submit(SubmitCommand) returns (google.protobuf.Empty) {}
     rpc Get(GetCommand) returns (LoanAppState) {}
     rpc Approve(ApproveCommand) returns (google.protobuf.Empty) {}
     rpc Decline(DeclineCommand) returns (google.protobuf.Empty) {}

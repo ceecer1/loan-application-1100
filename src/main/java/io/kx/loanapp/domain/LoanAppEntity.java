@@ -94,6 +94,7 @@ public class LoanAppEntity extends AbstractLoanAppEntity {
   public LoanAppDomain.LoanAppDomainState approved(LoanAppDomain.LoanAppDomainState currentState, LoanAppDomain.Approved approved) {
     throw new RuntimeException("The event handler for `Approved` is not implemented, yet");
   }
+  
   @Override
   public LoanAppDomain.LoanAppDomainState declined(LoanAppDomain.LoanAppDomainState currentState, LoanAppDomain.Declined declined) {
     throw new RuntimeException("The event handler for `Declined` is not implemented, yet");
