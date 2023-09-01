@@ -112,10 +112,10 @@ brew install grpcurl
 
 Test service, submit loan app
 ```sh
-grpcurl -d '{"loan_app_id": "uuid", "client_id": "client100", "client_monthly_income_cents": 100000, "loan_amount_cents": 200000, "loan_duration_months": 28}' mute-hill-0226.eu-central-1.kalix.app:443 io.kx.loanapp.api.LoanAppService/Submit
+grpcurl -d '{"loan_app_id": "loan_app_id_12345", "client_id": "client100", "client_monthly_income_cents": 100000, "loan_amount_cents": 200000, "loan_duration_months": 28}' mute-hill-0226.eu-central-1.kalix.app:443 io.kx.loanapp.api.LoanAppService/Submit
 ```
 
 Retrieve loan app
 ```sh
-grpcurl -d '{"loan_app_id": "uuid"}' mute-hill-0226.eu-central-1.kalix.app:443 io.kx.loanapp.api.LoanAppService/Get
+grpcurl -d '{"loan_app_id": "loan_app_id_12345"}' mute-hill-0226.eu-central-1.kalix.app:443 io.kx.loanapp.api.LoanAppService/Get
 ```

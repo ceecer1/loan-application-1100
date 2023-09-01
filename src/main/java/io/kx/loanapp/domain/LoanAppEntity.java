@@ -70,12 +70,39 @@ public class LoanAppEntity extends AbstractLoanAppEntity {
 
   @Override
   public Effect<Empty> approve(LoanAppDomain.LoanAppDomainState currentState, LoanAppApi.ApproveCommand approveCommand) {
-    return effects().error("The command handler for `Approve` is not implemented, yet");
+    if(currentState.equals(LoanAppDomain.LoanAppDomainState.getDefaultInstance())) {
+      return effects().error("The loan application was never created before");
+    } else if(currentState.getStatus() == LoanAppDomain.LoanAppDomainStatus.STATUS_IN_REVIEW) {
+      LoanAppDomain.Approved approvedEvent = LoanAppDomain.Approved.newBuilder()
+        .setLoanAppId(approveCommand.getLoanAppId())
+        .setEventTimestamp(Timestamps.fromMillis(System.currentTimeMillis()))
+        .build();
+
+      return effects().emitEvent(approvedEvent).thenReply(any -> Empty.getDefaultInstance());
+    } else if (currentState.getStatus() == LoanAppDomain.LoanAppDomainStatus.STATUS_APPROVED) {
+      return effects().reply(Empty.getDefaultInstance());
+    } else {
+      return effects().error("Something wrong");
+    }
   }
 
   @Override
   public Effect<Empty> decline(LoanAppDomain.LoanAppDomainState currentState, LoanAppApi.DeclineCommand declineCommand) {
-    return effects().error("The command handler for `Decline` is not implemented, yet");
+    if(currentState.equals(LoanAppDomain.LoanAppDomainState.getDefaultInstance())) {
+      return effects().error("The loan application was never created before");
+    } else if(currentState.getStatus() == LoanAppDomain.LoanAppDomainStatus.STATUS_IN_REVIEW) {
+      LoanAppDomain.Declined declinedEvent = LoanAppDomain.Declined.newBuilder()
+        .setLoanAppId(declineCommand.getLoanAppId())
+        .setReason(declineCommand.getReason())
+        .setEventTimestamp(Timestamps.fromMillis(System.currentTimeMillis()))
+        .build();
+
+      return effects().emitEvent(declinedEvent).deleteEntity().thenReply(any -> Empty.getDefaultInstance());
+    } else if (currentState.getStatus() == LoanAppDomain.LoanAppDomainStatus.STATUS_DECLINED) {
+      return effects().reply(Empty.getDefaultInstance());
+    } else {
+      return effects().error("Something wrong");
+    }
   }
 
   @Override
@@ -92,12 +119,19 @@ public class LoanAppEntity extends AbstractLoanAppEntity {
 
   @Override
   public LoanAppDomain.LoanAppDomainState approved(LoanAppDomain.LoanAppDomainState currentState, LoanAppDomain.Approved approved) {
-    throw new RuntimeException("The event handler for `Approved` is not implemented, yet");
+    return currentState.toBuilder()
+      .setStatus(LoanAppDomain.LoanAppDomainStatus.STATUS_APPROVED)
+      .setLastUpdateTimestamp(approved.getEventTimestamp())
+      .build();
   }
   
   @Override
   public LoanAppDomain.LoanAppDomainState declined(LoanAppDomain.LoanAppDomainState currentState, LoanAppDomain.Declined declined) {
-    throw new RuntimeException("The event handler for `Declined` is not implemented, yet");
+    return currentState.toBuilder()
+              .setStatus(LoanAppDomain.LoanAppDomainStatus.STATUS_DECLINED)
+              .setDeclineReason(declined.getReason())
+              .setLastUpdateTimestamp(declined.getEventTimestamp())
+              .build();
   }
 
 }
